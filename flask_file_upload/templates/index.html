@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Markdown Converter</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-main">
+            <h1>Convert PDF to Markdown/Text with Llama Parse</h1>
+            <div class="header-actions">
+                <a href="https://cloud.llamaindex.ai/parse" target="_blank" rel="noopener noreferrer">
+                    <i class="fas fa-cloud"></i>
+                    Llama Cloud
+                </a>
+                <a href="https://github.com/amararun/llama-parse-flask" target="_blank" rel="noopener noreferrer">
+                    <i class="fab fa-github"></i>
+                    GitHub
+                </a>
+            </div>
+        </div>
+        <div class="header-subtitle">
+            Annual Reports • 10-K • Research Papers • Complex Tables • Financial Documents
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="upload-section">
+            <h2>Upload your PDF file</h2>
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" name="file" accept=".pdf" required>
+                <div id="buttons-container">
+                    <button type="submit">
+                        <i class="fas fa-upload"></i>
+                        Upload PDF
+                    </button>
+                    <button id="download-btn" type="button" style="display: none;">
+                        <i class="fas fa-download"></i>
+                        Download Markdown
+                    </button>
+                </div>
+            </form>
+            <p id="status">Status: waiting for file</p>
+            <div id="spinner" class="spinner" style="display: none;"></div>
+        </div>
+
+        <div class="info-section">
+            <p>
+                Uses the Llama Parse API endpoint for conversion. For more complex parsing requirements and API access refer to Llama Cloud website:
+            </p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            Amar Harolikar
+            <span class="footer-separator">•</span>
+            Specialist - Decision Sciences & Applied Generative AI
+            <span class="footer-separator">•</span>
+            <div class="footer-links">
+                <a href="https://www.linkedin.com/in/amarharolikar" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <span class="footer-separator">•</span>
+                <a href="https://rex.tigzig.com" target="_blank" rel="noopener noreferrer">rex.tigzig.com</a>
+                <span class="footer-separator">•</span>
+                <a href="https://tigzig.com" target="_blank" rel="noopener noreferrer">tigzig.com</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let formData = new FormData(this);
+
+            const statusElement = document.getElementById('status');
+            const downloadButton = document.getElementById('download-btn');
+            const spinner = document.getElementById('spinner');
+
+            statusElement.textContent = 'Status: uploading...';
+            downloadButton.style.display = 'none';
+            spinner.style.display = 'block';
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                statusElement.textContent = data.message;
+                startPolling();
+            })
+            .catch(error => {
+                statusElement.textContent = 'Error: ' + error.message;
+                spinner.style.display = 'none';
+            });
+        });
+
+        function startPolling() {
+            const statusElement = document.getElementById('status');
+            const downloadButton = document.getElementById('download-btn');
+            const spinner = document.getElementById('spinner');
+
+            const poll = setInterval(() => {
+                fetch('/poll')
+                    .then(response => response.json())
+                    .then(data => {
+                        statusElement.textContent = 'Status: ' + data.status.toUpperCase();
+
+                        if (data.status.toLowerCase() === 'success' || data.status.toLowerCase() === 'completed') {
+                            clearInterval(poll);
+                            downloadButton.style.display = 'block';
+                            spinner.style.display = 'none';
+                        }
+
+                        if (data.status.toLowerCase() === 'blank' || data.status.toLowerCase() === 'error') {
+                            clearInterval(poll);
+                            spinner.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(poll);
+                        statusElement.textContent = 'Error: ' + error.message;
+                        spinner.style.display = 'none';
+                    });
+            }, 5000);
+        }
+
+        document.getElementById('download-btn').addEventListener('click', function(event) {
+            event.preventDefault();
+            window.location.href = '/download';
+        });
+    </script>
+</body>
+</html>
