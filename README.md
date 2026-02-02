@@ -117,3 +117,9 @@ flask_file_upload/
 - CORS protection enabled
 - Temporary file cleanup
 - No permanent storage of uploaded files
+
+## Author
+
+Built by [Amar Harolikar](https://www.linkedin.com/in/amarharolikar/)
+
+Explore 30+ open source AI tools for analytics, databases & automation at [tigzig.com](https://tigzig.com)
